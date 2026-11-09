@@ -30,7 +30,7 @@ export interface FramePhysicsState {
 
 /**
  * Dynamically generates a symmetrical, pinch-free SVG notch path.
- * Automatically compresses shoulder and corner radii when the orb approaches panel edges.
+ * Automatically adapts shoulder and corner radii so both sides are always 100% symmetrical.
  */
 export function buildSymmetricalNotch({
   width = 332,
@@ -44,73 +44,67 @@ export function buildSymmetricalNotch({
   bottomCornerRadius = 0,
 }: NotchGeometryParams = {}): string {
   const safeWidth = Math.max(120, width);
-  const R = orbRadius + gap;
-  const clampedCenterX = Math.max(R + 4, Math.min(safeWidth - R - 4, centerX));
+  const R = orbRadius + gap; // 31.5 by default
+  const clampedCenterX = Math.max(R + 6, Math.min(safeWidth - R - 6, centerX));
   const distLeft = clampedCenterX;
   const distRight = safeWidth - clampedCenterX;
+  const minDistToEdge = Math.min(distLeft, distRight);
 
-  function calcSide(distToEdge: number) {
-    const safeDist = Math.max(R + 2, distToEdge);
-    // Reserve space for outer corner rounding when possible so the outer shoulder doesn't swallow the corner
-    const desiredCornerReserve = Math.min(cornerRadius * 0.55, Math.max(0, safeDist - R - 2));
-    const effectiveDist = Math.max(R + 1.5, safeDist - desiredCornerReserve);
-    const maxAllowedSR = Math.max(1.5, (effectiveDist * effectiveDist - R * R) / (2 * R));
-    const sR = Math.min(shoulderRadius, maxAllowedSR);
+  // Both shoulders MUST have the exact same radius sR so the circular cavity is never tilted or lopsided
+  const desiredCorner = Math.min(cornerRadius, 18);
+  const availableForShoulder = Math.max(R + 1.5, minDistToEdge - desiredCorner * 0.55);
+  const maxAllowedSR = Math.max(4.0, (availableForShoulder * availableForShoulder - R * R) / (2 * R));
+  const sR = Math.min(shoulderRadius, maxAllowedSR);
 
-    const sinAlpha = sR / (R + sR);
-    const cosAlpha = Math.sqrt(Math.max(0, 1 - sinAlpha * sinAlpha));
+  const sinAlpha = sR / (R + sR);
+  const cosAlpha = Math.sqrt(Math.max(0, 1 - sinAlpha * sinAlpha));
 
-    const dxStart = Math.min(distToEdge - 1, (R + sR) * cosAlpha);
-    const dxArc = R * cosAlpha;
-    const yArc = topY + R * sinAlpha;
+  const dxShoulder = (R + sR) * cosAlpha;
+  const dxArc = R * cosAlpha;
+  const yArc = topY + R * sinAlpha;
 
-    const remainingSpace = Math.max(0, distToEdge - dxStart);
-    const cR = Math.min(cornerRadius, remainingSpace);
+  const xLeftStart = Math.max(0, clampedCenterX - dxShoulder);
+  const xRightEnd = Math.min(safeWidth, clampedCenterX + dxShoulder);
+  const xLeftArc = clampedCenterX - dxArc;
+  const xRightArc = clampedCenterX + dxArc;
 
-    return { sR, dxStart, dxArc, yArc, cR };
-  }
-
-  const left = calcSide(distLeft);
-  const right = calcSide(distRight);
-
-  const xLeftStart = Math.max(left.cR, clampedCenterX - left.dxStart);
-  const xLeftArc = clampedCenterX - left.dxArc;
-  const xRightArc = clampedCenterX + right.dxArc;
-  const xRightEnd = Math.min(safeWidth - right.cR, clampedCenterX + right.dxStart);
+  // Outer corners: must not collide with the notch shoulders
+  const maxCornerPossible = Math.max(4, Math.min(xLeftStart, safeWidth - xRightEnd));
+  const cR = Math.min(cornerRadius, maxCornerPossible);
 
   const bR = Math.max(0, Math.min(bottomCornerRadius, 32));
 
   if (bR > 0) {
     return [
-      `M ${left.cR.toFixed(2)} ${topY}`,
+      `M ${cR.toFixed(2)} ${topY}`,
       `H ${xLeftStart.toFixed(2)}`,
-      `A ${left.sR.toFixed(2)} ${left.sR.toFixed(2)} 0 0 1 ${xLeftArc.toFixed(2)} ${left.yArc.toFixed(2)}`,
-      `A ${R.toFixed(2)} ${R.toFixed(2)} 0 0 0 ${xRightArc.toFixed(2)} ${right.yArc.toFixed(2)}`,
-      `A ${right.sR.toFixed(2)} ${right.sR.toFixed(2)} 0 0 1 ${xRightEnd.toFixed(2)} ${topY}`,
-      `H ${(safeWidth - right.cR).toFixed(2)}`,
-      `A ${right.cR.toFixed(2)} ${right.cR.toFixed(2)} 0 0 1 ${safeWidth.toFixed(2)} ${(topY + right.cR).toFixed(2)}`,
+      `A ${sR.toFixed(2)} ${sR.toFixed(2)} 0 0 1 ${xLeftArc.toFixed(2)} ${yArc.toFixed(2)}`,
+      `A ${R.toFixed(2)} ${R.toFixed(2)} 0 0 0 ${xRightArc.toFixed(2)} ${yArc.toFixed(2)}`,
+      `A ${sR.toFixed(2)} ${sR.toFixed(2)} 0 0 1 ${xRightEnd.toFixed(2)} ${topY}`,
+      `H ${(safeWidth - cR).toFixed(2)}`,
+      `A ${cR.toFixed(2)} ${cR.toFixed(2)} 0 0 1 ${safeWidth.toFixed(2)} ${(topY + cR).toFixed(2)}`,
       `V ${(height - bR).toFixed(2)}`,
       `A ${bR.toFixed(2)} ${bR.toFixed(2)} 0 0 1 ${(safeWidth - bR).toFixed(2)} ${height}`,
       `H ${bR.toFixed(2)}`,
       `A ${bR.toFixed(2)} ${bR.toFixed(2)} 0 0 1 0 ${(height - bR).toFixed(2)}`,
-      `V ${(topY + left.cR).toFixed(2)}`,
-      `A ${left.cR.toFixed(2)} ${left.cR.toFixed(2)} 0 0 1 ${left.cR.toFixed(2)} ${topY}`,
+      `V ${(topY + cR).toFixed(2)}`,
+      `A ${cR.toFixed(2)} ${cR.toFixed(2)} 0 0 1 ${cR.toFixed(2)} ${topY}`,
       `Z`,
     ].join(' ');
   }
 
   return [
-    `M ${left.cR.toFixed(2)} ${topY}`,
+    `M ${cR.toFixed(2)} ${topY}`,
     `H ${xLeftStart.toFixed(2)}`,
-    `A ${left.sR.toFixed(2)} ${left.sR.toFixed(2)} 0 0 1 ${xLeftArc.toFixed(2)} ${left.yArc.toFixed(2)}`,
-    `A ${R.toFixed(2)} ${R.toFixed(2)} 0 0 0 ${xRightArc.toFixed(2)} ${right.yArc.toFixed(2)}`,
-    `A ${right.sR.toFixed(2)} ${right.sR.toFixed(2)} 0 0 1 ${xRightEnd.toFixed(2)} ${topY}`,
-    `H ${(safeWidth - right.cR).toFixed(2)}`,
-    `A ${right.cR.toFixed(2)} ${right.cR.toFixed(2)} 0 0 1 ${safeWidth.toFixed(2)} ${(topY + right.cR).toFixed(2)}`,
+    `A ${sR.toFixed(2)} ${sR.toFixed(2)} 0 0 1 ${xLeftArc.toFixed(2)} ${yArc.toFixed(2)}`,
+    `A ${R.toFixed(2)} ${R.toFixed(2)} 0 0 0 ${xRightArc.toFixed(2)} ${yArc.toFixed(2)}`,
+    `A ${sR.toFixed(2)} ${sR.toFixed(2)} 0 0 1 ${xRightEnd.toFixed(2)} ${topY}`,
+    `H ${(safeWidth - cR).toFixed(2)}`,
+    `A ${cR.toFixed(2)} ${cR.toFixed(2)} 0 0 1 ${safeWidth.toFixed(2)} ${(topY + cR).toFixed(2)}`,
     `V ${height}`,
     `H 0`,
-    `V ${(topY + left.cR).toFixed(2)}`,
-    `A ${left.cR.toFixed(2)} ${left.cR.toFixed(2)} 0 0 1 ${left.cR.toFixed(2)} ${topY}`,
+    `V ${(topY + cR).toFixed(2)}`,
+    `A ${cR.toFixed(2)} ${cR.toFixed(2)} 0 0 1 ${cR.toFixed(2)} ${topY}`,
     `Z`,
   ].join(' ');
 }
@@ -186,7 +180,6 @@ export function calculateDynamicEase(t: number): number {
 
 /**
  * Calculates adaptive transit duration in milliseconds based on travel distance and speed multiplier.
- * Fixed bug: Speed multipliers < 1 (Slow-Mo, e.g., 0.25x) now properly extend duration beyond 480ms.
  */
 export function calculateTransitDuration(
   deltaX: number,
@@ -201,8 +194,7 @@ export function calculateTransitDuration(
 
 /**
  * Pure frame physics evaluator for t in [0, 1].
- * FIXED BUG: Replaced the abrupt discontinuity at t=0.88 with a continuous C1-smooth blend
- * between flight stretch and landing elastic cushion so the orb never snaps mid-air.
+ * Uses a gentle, fluid hop envelope (max 4.5px) that keeps the orb comfortably cradled inside the notch.
  */
 export function computeFramePhysics(
   t: number,
@@ -214,7 +206,8 @@ export function computeFramePhysics(
   const x = startX + deltaX * ease;
 
   const absDelta = Math.abs(deltaX);
-  const hopHeight = Math.min(13, absDelta * 0.082);
+  // Gentle, fluid hop that preserves the notch cradle and never lifts the orb out into the content area
+  const hopHeight = Math.min(4.5, absDelta * 0.035);
   const arcProgress = Math.sin(Math.pow(clampedT, 0.72) * Math.PI);
   const arcY = arcProgress * hopHeight;
 
@@ -248,7 +241,6 @@ export function computeFramePhysics(
   } else {
     shouldSwitchIcon = true;
     const p = (clampedT - 0.66) / 0.34;
-    // Smooth cubic ease-out for icon appearance
     const easeInIcon = 1 - Math.pow(1 - p, 2.5);
     iconOpacity = Math.min(1, easeInIcon);
     iconScale = 0.82 + 0.18 * easeInIcon;

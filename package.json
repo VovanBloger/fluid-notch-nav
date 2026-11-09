@@ -1,17 +1,37 @@
 {
   "name": "fluid-notch-nav",
   "version": "1.0.0",
-  "description": "Fluid Notch Navigation Studio - Physics-driven SVG notch navigation bar",
-  "private": true,
+  "description": "A fluid, physics-driven bottom navigation bar for React & Next.js with adaptive SVG notch cutout, floating 3D orb, jelly physics, and multi-stage haptics",
+  "author": "VovanBloger",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VovanBloger/fluid-notch-nav.git"
+  },
+  "homepage": "https://github.com/VovanBloger/fluid-notch-nav#readme",
+  "bugs": {
+    "url": "https://github.com/VovanBloger/fluid-notch-nav/issues"
+  },
+  "keywords": [
+    "react",
+    "react-component",
+    "navigation",
+    "notch",
+    "svg",
+    "physics",
+    "haptics",
+    "telegram-mini-app",
+    "glassmorphism",
+    "ui",
+    "tailwind"
+  ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "clean": "next clean"
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@hookform/resolvers": "^5.2.1",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
@@ -32,7 +52,6 @@
     "@types/react-dom": "^19",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.8",
-    "firebase-tools": "^15.0.0",
     "tailwindcss": "4.1.11",
     "tw-animate-css": "^1.4.0",
     "typescript": "5.9.3"

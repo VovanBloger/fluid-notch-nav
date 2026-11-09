@@ -903,6 +903,11 @@ export function AdaptiveNotchNav<T extends string = string>({
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
       }
+      if (orbEl) {
+        orbEl.style.top = '22px';
+        orbEl.style.transform = 'translate(-50%, -50%) scale(1, 1)';
+      }
+      setIsTransitioning(false);
     };
   }, [activeIndex, activeTab, navMode, navWidth, tabs.length, bottomCornerRadius, isReady]);
 
@@ -994,7 +999,7 @@ export function AdaptiveNotchNav<T extends string = string>({
         <div
           ref={floatingOrbRef}
           style={{
-            left: `${getTabCenterX(activeIndex, navWidth, tabs.length)}px`,
+            // left controlled imperatively by RAF physics to prevent React 19 render clobbering
             top: '22px',
             width: `${orbSize}px`,
             height: `${orbSize}px`,
@@ -1134,7 +1139,7 @@ export function AdaptiveNotchNav<T extends string = string>({
         {/* 5. Interactive Tab Buttons (Accessible hitboxes + Keyboard support) */}
         <div
           role="tablist"
-          aria-label="Навигационные вкладки"
+          aria-label="Navigation Tabs"
           className="absolute inset-x-0 top-[22px] bottom-0 px-3 grid items-center z-20"
           style={{
             gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
@@ -1158,7 +1163,7 @@ export function AdaptiveNotchNav<T extends string = string>({
                   ? 'translateY(-10px) scale(0.65)'
                   : 'translateY(0px) scale(1)';
 
-            // Critical fix: NEVER leave the inactive badge floating inside the empty notch cavity when isActive && navMode === 'notch'!
+            // In notch mode, hide the dock badge when active because the badge migrates to the floating orb
             const inactiveBadgeVisible =
               hasBadge && (navMode === 'pill' ? true : !isActive);
 
@@ -1174,7 +1179,7 @@ export function AdaptiveNotchNav<T extends string = string>({
                 role="tab"
                 aria-selected={isActive}
                 aria-label={
-                  hasBadge ? `${tab.label} (${tab.badge} уведомлений)` : tab.label
+                  hasBadge ? `${tab.label} (${tab.badge} notifications)` : tab.label
                 }
                 onPointerDown={(e) => {
                   if (e.button !== 0) return;

@@ -1,6 +1,0 @@
-{
-  "name": "Fluid Notch Navigation Studio",
-  "description": "Интерактивный демо-стенд, оптимизированный движок физической геометрии и авторские темы для компонента AdaptiveNotchNav.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  <strong>English</strong> | <a href="README.ru.md"><strong>Русский</strong></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/VovanBloger/fluid-notch-nav/stargazers"><img src="https://img.shields.io/github/stars/VovanBloger/fluid-notch-nav?color=B833FF&style=for-the-badge&logo=github" alt="GitHub Stars" /></a>
   <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" alt="React 19" /></a>
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15.4-black?style=for-the-badge&logo=next.js" alt="Next.js 15" /></a>

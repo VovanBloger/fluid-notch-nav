@@ -7,7 +7,7 @@ import {
   calculateDynamicEase,
   calculateTransitDuration,
   computeFramePhysics,
-} from './notch-math';
+} from './notch-math.ts';
 
 test('getTabCenterX distributes tabs evenly across container width', () => {
   const w = 344; // innerW = 320, 4 tabs -> 80px each

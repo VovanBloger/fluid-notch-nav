@@ -29,6 +29,7 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
+    "test": "node --experimental-strip-types lib/notch-math.test.ts",
     "lint": "eslint ."
   },
   "dependencies": {
